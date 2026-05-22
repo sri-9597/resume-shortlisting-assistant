@@ -180,6 +180,15 @@ engineer, QA engineer, customer support).
 
 ## Bring-your-own ingestion
 
+> **Why isn't ingestion built in?** Fetching and structuring candidate data
+> from third-party sources (LinkedIn, job boards, ATS exports without
+> sanctioned APIs, etc.) is intentionally excluded from this repository.
+> Most such sources prohibit automated collection in their terms of service,
+> and bundling that code here would create unnecessary risk for everyone
+> who uses this tool. See [CONTRIBUTING.md](CONTRIBUTING.md#no-scrapers-in-this-repo)
+> for the longer rationale. If you build an adapter for a specific source,
+> please publish it as a separate package.
+
 The pipeline doesn't care where your `candidates.csv` comes from. Common
 sources:
 
