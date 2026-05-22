@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Output dirs created by the tool (role slugs)
+# Common role names — extend as needed
+/senior-sde/
+/qa/
+/test-role/
+
+# But always ignore the artifacts pattern
+**/manifest.sqlite
+**/resumes/
+**/scores/
+ranked.csv
+ranked_full.csv
+candidates.csv
+
+# Local config / secrets
+.env
+.env.local
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Local working notes (never commit)
+notes.txt
+notes.md
+NOTES.md
+scratch/
+
+# Internal design docs / historical specs (stay local)
+docs/

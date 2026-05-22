@@ -1,0 +1,32 @@
+QA Engineer — Sample Job Description
+=====================================
+
+We're hiring a QA engineer who will own automated testing across our product.
+This is an automation-first role: if you prefer to test only manually, this
+isn't the right fit.
+
+What you'll do
+--------------
+- Design and grow our automation suites: API tests, end-to-end browser tests,
+  contract tests where appropriate.
+- Decide what to automate vs. what to leave manual — your judgement matters more
+  than your line count.
+- Integrate tests into CI/CD; own flaky-test mitigation, parallelization,
+  and test infrastructure.
+- Partner with engineers on bug triage, root-cause analysis, and writing
+  high-signal bug reports.
+- Champion testability concerns during feature design.
+
+What we're looking for
+----------------------
+- 3+ years of professional QA experience.
+- Hands-on experience writing automated tests in at least one framework
+  (Playwright, Cypress, Selenium, Pytest, RestAssured, etc.).
+- Programming skill — your automation code should be reviewable, not just runnable.
+- Strong written communication: your bug reports save engineers time.
+- Bonus: experience with performance testing, accessibility testing, or
+  test-data-management strategies.
+
+Working arrangement
+-------------------
+Fully remote. Async-first.

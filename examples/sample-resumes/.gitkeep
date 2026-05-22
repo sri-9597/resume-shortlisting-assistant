@@ -1,0 +1,3 @@
+# Drop your own resume PDFs here (one per candidate_id from
+# ../sample-candidates.csv). This .gitkeep exists to make the directory
+# survive in git when it's empty. Delete it once real PDFs are added.

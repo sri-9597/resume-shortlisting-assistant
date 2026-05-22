@@ -1,0 +1,34 @@
+role: "Backend Engineer (sample)"
+version: 1
+
+# Knockouts disqualify a candidate regardless of weighted score.
+# Keep these to hard, job-related, non-discriminatory requirements.
+knockouts:
+  - id: experience
+    description: "Candidate has at least 4 years of total professional software engineering experience."
+  - id: backend_focus
+    description: "Resume shows backend / server-side work as the primary focus, not purely frontend or non-engineering."
+
+# Weighted criteria must sum to 1.0.
+criteria:
+  - id: backend_depth
+    weight: 0.30
+    description: "Production experience building backend services in any mainstream stack (Java/Spring, Node/TypeScript, Python, Go, etc.). System-design exposure on non-trivial services."
+  - id: data_layer
+    weight: 0.15
+    description: "Experience with relational and/or document databases at scale. Familiarity with indexing, schema evolution, query optimization, or ingestion pipelines."
+  - id: ownership
+    weight: 0.15
+    description: "Signals of end-to-end ownership: shipping features through design, implementation, deployment, and on-call. Not strictly a 'startup' signal; can come from any environment."
+  - id: collaboration
+    weight: 0.10
+    description: "Evidence of cross-functional collaboration, written communication (RFCs, design docs, PR reviews), or mentorship."
+  - id: longevity
+    weight: 0.10
+    description: "Average tenure > 18 months at last three roles. Heavy weighting against this only if there's an obvious pattern of <6mo stints."
+  - id: technical_breadth
+    weight: 0.10
+    description: "Exposure to adjacent areas (infra, observability, security, frontend basics) that signal a generalist mindset, not strict specialization."
+  - id: education
+    weight: 0.10
+    description: "CS-related degree from a reputable institution, OR demonstrated autodidact (notable OSS, technical writing, proven projects)."

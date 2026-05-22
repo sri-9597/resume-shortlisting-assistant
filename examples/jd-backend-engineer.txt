@@ -1,0 +1,31 @@
+Backend Engineer — Sample Job Description
+==========================================
+
+We're hiring a backend engineer to own services that power our product. You'll
+work across the stack but spend most of your time in the API/data layer.
+
+What you'll do
+--------------
+- Design and ship backend services in our primary stack (Node.js + TypeScript or
+  Java + Spring — we'll match to your strengths).
+- Own features end-to-end: design doc → implementation → deploy → on-call.
+- Make data-model decisions: schema design, indexing, query optimization,
+  migrations under load.
+- Review PRs, write technical docs, mentor more junior engineers.
+- Participate in our weekly rotation to handle production incidents.
+
+What we're looking for
+----------------------
+- 4+ years of professional backend experience.
+- Production experience with at least one mainstream backend stack and one
+  database technology (relational or document).
+- Comfortable with the full delivery cycle — not just writing code, but
+  shipping, observing, and iterating on what you've shipped.
+- Clear written communication; comfortable working asynchronously across
+  timezones.
+- Bonus: experience with our specific stack (Node/TypeScript, Java/Spring,
+  MongoDB, AWS, Python), or with high-throughput data pipelines.
+
+Working arrangement
+-------------------
+Fully remote. Async-first. ~4 hours/day of overlap with EU/UK timezones expected.

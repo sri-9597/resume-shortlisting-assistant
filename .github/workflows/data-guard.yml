@@ -1,0 +1,77 @@
+name: data-guard
+
+# Fails CI if a commit adds files that look like real candidate data:
+#   - PDF resumes outside examples/sample-resumes/
+#   - manifest.sqlite anywhere
+#   - resumes/ or scores/ directories outside examples/
+#   - candidates.csv, ranked.csv, ranked_full.csv outside examples/
+#
+# Accidentally committing one candidate's resume could be a GDPR incident.
+# This guard is intentionally strict; if it false-positives on a legitimate
+# file, qualify the path or update this workflow.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed files
+        id: changed
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+          # If base is zeros (initial push), diff against the empty tree.
+          if [[ "$base" =~ ^0+$ ]]; then
+            base=$(git hash-object -t tree /dev/null)
+          fi
+          git diff --name-only --diff-filter=AM "$base" "$head" > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Scan for forbidden paths
+        run: |
+          set -e
+          violations=()
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              examples/sample-resumes/*.pdf) continue ;;
+              examples/*) continue ;;
+              tests/*) continue ;;
+            esac
+            case "$f" in
+              *.pdf)                violations+=("PDF outside examples/sample-resumes/: $f") ;;
+              **/manifest.sqlite|manifest.sqlite) violations+=("manifest.sqlite committed: $f") ;;
+              **/resumes/*|resumes/*) violations+=("file under resumes/: $f") ;;
+              **/scores/*|scores/*) violations+=("file under scores/: $f") ;;
+              candidates.csv|*/candidates.csv) violations+=("candidates.csv outside examples/: $f") ;;
+              ranked.csv|*/ranked.csv|ranked_full.csv|*/ranked_full.csv) violations+=("ranking output committed: $f") ;;
+            esac
+          done < changed_files.txt
+
+          if [ ${#violations[@]} -gt 0 ]; then
+            echo ""
+            echo "Data-guard FAILED. The following file(s) look like real candidate data:"
+            for v in "${violations[@]}"; do
+              echo "  - $v"
+            done
+            echo ""
+            echo "If this is a false positive (e.g., a new fixture under examples/),"
+            echo "update .github/workflows/data-guard.yml to allow the path."
+            exit 1
+          fi
+          echo "data-guard passed."

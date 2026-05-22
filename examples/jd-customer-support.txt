@@ -1,0 +1,33 @@
+Customer Support Specialist — Sample Job Description
+=====================================================
+
+We're hiring a customer support specialist to own day-to-day customer
+communication for our SaaS product. Most of the job is written: tickets,
+help docs, internal triage notes.
+
+What you'll do
+--------------
+- Triage and respond to inbound customer support tickets (mostly written,
+  occasional video calls).
+- Investigate technical issues end-to-end — read logs, check the DB, escalate
+  to engineering only when you've narrowed the cause.
+- Write and maintain help-center articles. Identify high-volume topics and
+  pre-empt tickets with documentation.
+- Feed customer pain back into product: weekly themes, escalation patterns,
+  feature-request synthesis.
+- Train new teammates on tools and workflows as the team grows.
+
+What we're looking for
+----------------------
+- 2+ years of customer-facing support experience, ideally in SaaS or B2B tech.
+- Excellent written English — clear, concise, warm.
+- Technical aptitude: comfort with APIs, log files, browser dev tools.
+- Customer empathy demonstrated by past escalations, CSAT/NPS improvements, or
+  documentation work.
+- Bonus: experience with mainstream support tooling (Zendesk, Intercom, HubSpot,
+  Front) and an interest in support ops / scaling support.
+
+Working arrangement
+-------------------
+Fully remote. Coverage window expected: ~9am–5pm in EU/UK timezones, with
+on-call rotation for after-hours escalations.

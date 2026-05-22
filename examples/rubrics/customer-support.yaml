@@ -1,0 +1,31 @@
+role: "Customer Support Specialist (sample)"
+version: 1
+
+knockouts:
+  - id: support_experience
+    description: "Candidate has at least 2 years of professional customer-facing support experience (B2C, B2B, or SaaS)."
+  - id: written_english
+    description: "Resume itself demonstrates clear written English. Heavy spelling/grammar issues on the resume itself are a knockout for a written-support role."
+
+criteria:
+  - id: communication_quality
+    weight: 0.25
+    description: "Clarity, concision, and warmth in writing. Resume should read as someone who could ghostwrite a help-center article without rewriting."
+  - id: technical_aptitude
+    weight: 0.20
+    description: "Comfort with technical concepts at the depth needed for the product. Bonus for prior SaaS/tech support, API familiarity, or troubleshooting skills."
+  - id: customer_empathy
+    weight: 0.15
+    description: "Signals of customer-centric thinking: bullets about resolving difficult escalations, CSAT/NPS improvements, root-cause work, or feedback synthesis."
+  - id: ownership
+    weight: 0.10
+    description: "Evidence of going beyond ticket-closing: building macros, writing help docs, training peers, contributing to product feedback loops."
+  - id: tools_proficiency
+    weight: 0.10
+    description: "Experience with mainstream support tooling (Zendesk, Intercom, HubSpot, Front, etc.) and ticket-routing concepts."
+  - id: schedule_fit
+    weight: 0.10
+    description: "Timezone or shift-coverage signals appropriate for the role's coverage window. Use the JD's coverage requirements as the calibration point."
+  - id: longevity
+    weight: 0.10
+    description: "Average tenure > 12 months at last three roles (lower bar than engineering roles given support-industry norms)."

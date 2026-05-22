@@ -1,0 +1,31 @@
+role: "QA Engineer (sample)"
+version: 1
+
+knockouts:
+  - id: qa_experience
+    description: "Candidate has at least 3 years of professional QA or test engineering experience."
+  - id: automation_experience
+    description: "Resume shows hands-on experience writing automated tests (any framework: Playwright, Cypress, Selenium, Pytest, RestAssured, etc.). Pure manual-QA backgrounds are knocked out."
+
+criteria:
+  - id: automation_depth
+    weight: 0.30
+    description: "Production experience designing and maintaining automation suites. Bonus for end-to-end + API + unit-test breadth, framework migration experience, or CI integration."
+  - id: test_strategy
+    weight: 0.20
+    description: "Demonstrated test strategy thinking: risk-based test design, coverage planning, ROI tradeoffs between unit/integration/E2E. Not just 'wrote tests' but 'decided what to test'."
+  - id: programming_skill
+    weight: 0.15
+    description: "Code quality of the automation work itself. Resume signals modern language fluency (Python, TypeScript, Java), code review experience, or contribution to test infrastructure."
+  - id: bug_advocacy
+    weight: 0.10
+    description: "Written-communication signals around bug reports, reproduction steps, root-cause analysis. Comfort working with engineers on triage."
+  - id: ci_cd_exposure
+    weight: 0.10
+    description: "Familiarity with CI/CD pipelines, test sharding/parallelization, flaky-test management."
+  - id: domain_curiosity
+    weight: 0.10
+    description: "Evidence of going beyond rote test execution: exploratory testing, performance testing, security awareness, accessibility testing."
+  - id: longevity
+    weight: 0.05
+    description: "Average tenure > 18 months at last three roles."

@@ -1,0 +1,9 @@
+candidate_id,name,headline,location,current_title,current_company,years_experience,top_skills,education,applied_at,source_url
+c001,Alex Backend,Senior backend engineer | distributed systems,Remote (EU),Senior Software Engineer,Globex Corp,8,Java;Spring;Kafka;PostgreSQL;AWS,BSc Computer Science,2026-05-01,https://example.invalid/c001
+c002,Sam Newgrad,Junior dev looking for first role,Remote (US),Intern,University Lab,1,Python;Flask;Git,BSc Computer Science (2025),2026-05-02,https://example.invalid/c002
+c003,Riley QA,QA automation engineer | Playwright + Pytest,Remote (LATAM),Senior QA Engineer,Initech,6,Playwright;Pytest;CI/CD;Selenium;TypeScript,BSc Information Systems,2026-05-03,https://example.invalid/c003
+c004,Casey Manual,Manual QA specialist | 8 years exploratory testing,Remote (APAC),QA Analyst,Hooli,8,Manual Testing;TestRail;JIRA;Exploratory Testing,Diploma in IT,2026-05-04,https://example.invalid/c004
+c005,Jordan Support,Customer Success Specialist | SaaS B2B,Remote (US),Senior Support Engineer,Acme SaaS,5,Zendesk;Intercom;SQL;API Troubleshooting;Help Docs,BA Communications,2026-05-05,https://example.invalid/c005
+c006,Morgan Frontend,Frontend engineer pivoting to fullstack,Remote (EU),Frontend Engineer,Pied Piper,4,React;TypeScript;Next.js;Node.js;GraphQL,BSc Software Engineering,2026-05-06,https://example.invalid/c006
+c007,Taylor Polyglot,Generalist engineer | backend + infra + frontend,Remote (Canada),Staff Engineer,Stark Industries,12,Go;Python;Kubernetes;Terraform;PostgreSQL,MSc Computer Science,2026-05-07,https://example.invalid/c007
+c008,Drew NoResume,Backend engineer (resume attachment pending),Remote (UK),Software Engineer,Wayne Enterprises,6,Node.js;TypeScript;MongoDB;Docker;CI/CD,BSc Computer Science,2026-05-08,https://example.invalid/c008
