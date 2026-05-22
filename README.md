@@ -238,7 +238,7 @@ This list isn't legal advice. Talk to your lawyer.
 
 ## License
 
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+MIT. See [`LICENSE`](LICENSE).
 
 ## Contributing
 

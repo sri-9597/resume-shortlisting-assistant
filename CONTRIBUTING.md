@@ -79,7 +79,7 @@ Patch `LLM_RETRY_DELAYS_SECONDS` to `(0.0, 0.0, 0.0)` in retry-path tests so the
 - Include tests. PRs without tests for new behavior will be asked for tests.
 - Update `README.md` if you change a CLI surface.
 - Update `CLAUDE.md` if you change the project's high-level architecture.
-- For new third-party dependencies, add an attribution line to `NOTICE`.
+- For new third-party dependencies, make sure they're permissively licensed (MIT, BSD, Apache-2.0, ISC). Copyleft (GPL/LGPL/AGPL) deps are not accepted.
 
 ## Data hygiene
 

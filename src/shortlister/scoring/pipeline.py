@@ -49,19 +49,8 @@ class CandidateInput:
         )
 
 
-def _company_context() -> str:
-    return (
-        "COMPANY CONTEXT:\n"
-        "One Oak Flow is a startup serving short-term vacation rental management companies. "
-        "Stack: Java/Spring, Next.js 14/15, React, Node.js, TypeScript, MongoDB, AWS, Python. "
-        "Core repos: nextjs-directbooking (direct booking sites for property managers) and "
-        "db-manager (multi-PMS ingestion + normalization pipeline). India-based remote team for SDE hires."
-    )
-
-
 def _build_cacheable_prefix(rubric: Rubric, jd_text: str) -> str:
     return (
-        f"{_company_context()}\n\n"
         f"--- JOB DESCRIPTION ---\n{jd_text.strip()}\n\n"
         f"--- RUBRIC ---\n{render_rubric_block(rubric)}\n"
     )
