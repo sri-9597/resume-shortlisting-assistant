@@ -15,15 +15,29 @@ log = get_logger(__name__)
 class QwenProvider(LLMProvider):
     """Local Qwen model served via an Ollama-compatible HTTP endpoint.
 
-    Default model is qwen2.5:14b-instruct on localhost:11434. The `OLLAMA_HOST`
+    Default model is qwen3:30b on localhost:11434. The `OLLAMA_HOST`
     env var (read in RuntimeConfig) can point at any compatible server.
+
+    By default requests carry `think: false` to suppress the reasoning preamble
+    that thinking models (qwen3) emit and that would corrupt JSON-mode output.
+    Set `disable_thinking=False` for non-thinking models that reject the field.
     """
 
     name = "qwen"
 
-    def __init__(self, *, base_url: str = DEFAULT_OLLAMA_BASE_URL, model: str = DEFAULT_QWEN_MODEL) -> None:
+    def __init__(
+        self,
+        *,
+        base_url: str = DEFAULT_OLLAMA_BASE_URL,
+        model: str = DEFAULT_QWEN_MODEL,
+        disable_thinking: bool = True,
+    ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
+        # Thinking-capable models (e.g. qwen3) emit a reasoning preamble that breaks
+        # JSON-mode parsing. Sending `think: false` suppresses it. Non-thinking models
+        # (e.g. the default qwen2.5) reject this field, so callers can opt out.
+        self.disable_thinking = disable_thinking
 
     async def score(
         self,
@@ -54,6 +68,8 @@ class QwenProvider(LLMProvider):
             ],
             "options": {"temperature": 0.1},
         }
+        if self.disable_thinking:
+            payload["think"] = False
         url = f"{self.base_url}/api/chat"
 
         last_err: Exception | None = None

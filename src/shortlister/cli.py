@@ -13,6 +13,7 @@ from .config import (
     DEFAULT_ANTHROPIC_MODEL,
     DEFAULT_OPENAI_KNOCKOUT_MODEL,
     DEFAULT_OPENAI_MODEL,
+    DEFAULT_QWEN_KNOCKOUT_MODEL,
     DEFAULT_QWEN_MODEL,
     RuntimeConfig,
 )
@@ -39,7 +40,13 @@ def _print_summary(prefix: str, summary: dict) -> None:
     typer.echo(prefix + " " + ", ".join(f"{k}={v}" for k, v in summary.items()))
 
 
-def _make_provider(name: str, model: str | None, runtime: RuntimeConfig) -> LLMProvider:
+def _make_provider(
+    name: str,
+    model: str | None,
+    runtime: RuntimeConfig,
+    *,
+    qwen_thinking: bool = False,
+) -> LLMProvider:
     name = name.lower()
     if name == "claude":
         return AnthropicProvider(api_key=runtime.anthropic_api_key, model=model or DEFAULT_ANTHROPIC_MODEL)
@@ -48,7 +55,11 @@ def _make_provider(name: str, model: str | None, runtime: RuntimeConfig) -> LLMP
     if name == "openai":
         return OpenAIProvider(api_key=runtime.openai_api_key, model=model or DEFAULT_OPENAI_MODEL)
     if name == "qwen":
-        return QwenProvider(base_url=runtime.ollama_base_url, model=model or DEFAULT_QWEN_MODEL)
+        return QwenProvider(
+            base_url=runtime.ollama_base_url,
+            model=model or DEFAULT_QWEN_MODEL,
+            disable_thinking=not qwen_thinking,
+        )
     raise typer.BadParameter(
         f"Unknown provider: {name!r} (expected 'claude', 'claude-code', 'openai', or 'qwen')"
     )
@@ -114,6 +125,13 @@ def score(
     model: Optional[str] = typer.Option(None, "--model"),
     knockout_provider: Optional[str] = typer.Option(None, "--knockout-provider"),
     knockout_model: Optional[str] = typer.Option(None, "--knockout-model"),
+    qwen_thinking: bool = typer.Option(
+        False,
+        "--qwen-thinking/--no-qwen-thinking",
+        help="For qwen only. Default (--no-qwen-thinking) sends think:false to suppress the "
+        "reasoning preamble that would corrupt JSON-mode output on thinking models like qwen3. "
+        "Pass --qwen-thinking for non-thinking models (e.g. qwen2.5) that reject the field.",
+    ),
     retry_failed: bool = typer.Option(False, "--retry-failed"),
 ) -> None:
     """Score parsed candidates against RUBRIC + JD using PROVIDER."""
@@ -129,7 +147,7 @@ def score(
             typer.echo(f"Re-queued {n} previously-failed candidates.")
         loaded_rubric = load_rubric(rubric)
         jd_text = load_jd(jd)
-        full_provider = _make_provider(provider, model, runtime)
+        full_provider = _make_provider(provider, model, runtime, qwen_thinking=qwen_thinking)
         ko_provider: LLMProvider | None = None
         if mode == "two-stage":
             ko_name = knockout_provider or provider
@@ -138,7 +156,9 @@ def score(
                 ko_model = DEFAULT_ANTHROPIC_KNOCKOUT_MODEL
             if ko_model is None and ko_name.lower() == "openai":
                 ko_model = DEFAULT_OPENAI_KNOCKOUT_MODEL
-            ko_provider = _make_provider(ko_name, ko_model, runtime)
+            if ko_model is None and ko_name.lower() == "qwen":
+                ko_model = DEFAULT_QWEN_KNOCKOUT_MODEL
+            ko_provider = _make_provider(ko_name, ko_model, runtime, qwen_thinking=qwen_thinking)
         summary = asyncio.run(
             run_scoring(
                 layout,
@@ -187,6 +207,13 @@ def run(
     model: Optional[str] = typer.Option(None, "--model"),
     knockout_provider: Optional[str] = typer.Option(None, "--knockout-provider"),
     knockout_model: Optional[str] = typer.Option(None, "--knockout-model"),
+    qwen_thinking: bool = typer.Option(
+        False,
+        "--qwen-thinking/--no-qwen-thinking",
+        help="For qwen only. Default (--no-qwen-thinking) sends think:false to suppress the "
+        "reasoning preamble that would corrupt JSON-mode output on thinking models like qwen3. "
+        "Pass --qwen-thinking for non-thinking models (e.g. qwen2.5) that reject the field.",
+    ),
     top: int = typer.Option(50, "--top", min=1),
     resume: bool = typer.Option(True, "--resume/--new", help="Resume from manifest (default) or start fresh."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation when --new wipes the role dir."),
@@ -239,7 +266,7 @@ def run(
         typer.echo("=== Stage 3: score ===")
         loaded_rubric = load_rubric(rubric)
         jd_text = load_jd(jd)
-        full_provider = _make_provider(provider, model, runtime)
+        full_provider = _make_provider(provider, model, runtime, qwen_thinking=qwen_thinking)
         ko_provider: LLMProvider | None = None
         if mode == "two-stage":
             ko_name = knockout_provider or provider
@@ -248,7 +275,9 @@ def run(
                 ko_model = DEFAULT_ANTHROPIC_KNOCKOUT_MODEL
             if ko_model is None and ko_name.lower() == "openai":
                 ko_model = DEFAULT_OPENAI_KNOCKOUT_MODEL
-            ko_provider = _make_provider(ko_name, ko_model, runtime)
+            if ko_model is None and ko_name.lower() == "qwen":
+                ko_model = DEFAULT_QWEN_KNOCKOUT_MODEL
+            ko_provider = _make_provider(ko_name, ko_model, runtime, qwen_thinking=qwen_thinking)
         score_summary = asyncio.run(
             run_scoring(
                 layout,
