@@ -33,6 +33,16 @@ def _make_simple_pdf(path: Path, body_text: str) -> None:
     c.save()
 
 
+def test_strip_unencodable_drops_lone_surrogates() -> None:
+    # pypdf sometimes emits the leading half of an emoji as a lone surrogate;
+    # it must be removed so write_text(encoding="utf-8") doesn't blow up.
+    raw = "Jane Doe \ud83d Senior QA Engineer"
+    cleaned = pdf_module._strip_unencodable(raw)
+    cleaned.encode("utf-8")  # would raise UnicodeEncodeError before stripping
+    assert "\ud83d" not in cleaned
+    assert "Jane Doe" in cleaned and "Senior QA Engineer" in cleaned
+
+
 def test_extract_text_pypdf_happy_path(tmp_path: Path) -> None:
     pdf_path = tmp_path / "ok.pdf"
     body = "John Doe\nSenior Software Engineer\n" + ("Python and Java backend work. " * 20)

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 from pydantic import ValidationError
 
+from ..config import DEFAULT_SCORE_CONCURRENCY
 from ..logging import get_logger
 from ..storage.layout import RoleLayout
-from ..storage.manifest import Manifest
+from ..storage.manifest import Manifest, CandidateRow
 from .providers.base import LLMProvider
 from .rubric import Rubric, render_rubric_block
 from .schemas import (
@@ -23,6 +26,44 @@ log = get_logger(__name__)
 
 
 Mode = Literal["single", "two-stage"]
+
+# Emit an INFO progress line every N candidates. Scoring is otherwise silent on
+# success, and a large batch through a local model can run for hours.
+PROGRESS_EVERY = 25
+
+
+async def _gather_bounded(
+    rows: list[CandidateRow],
+    worker: Callable[[CandidateRow], Awaitable[None]],
+    *,
+    concurrency: int,
+    stage_label: str,
+) -> None:
+    """Run `worker` over every row with at most `concurrency` in flight.
+
+    Candidates are independent, so this overlaps the provider-call waits. Order
+    of completion is not preserved; progress is logged every PROGRESS_EVERY.
+    Each worker is expected to isolate its own per-candidate failures — an
+    unhandled exception here propagates and stops the batch (as before).
+    """
+    total = len(rows)
+    log.info("%s: %d candidates to process (concurrency=%d).", stage_label, total, concurrency)
+    if total == 0:
+        return
+    sem = asyncio.Semaphore(max(1, concurrency))
+    done = 0
+
+    async def _run_one(row: CandidateRow) -> None:
+        nonlocal done
+        async with sem:
+            await worker(row)
+        # Synchronous section: no await between here and the next, so the counter
+        # and log stay consistent under the single-threaded event loop.
+        done += 1
+        if done % PROGRESS_EVERY == 0 or done == total:
+            log.info("%s: %d/%d candidates processed.", stage_label, done, total)
+
+    await asyncio.gather(*(_run_one(row) for row in rows))
 
 
 SYSTEM_PROMPT = (
@@ -127,25 +168,29 @@ async def run_scoring(
     mode: Mode,
     full_provider: LLMProvider,
     knockout_provider: LLMProvider | None = None,
+    concurrency: int = DEFAULT_SCORE_CONCURRENCY,
 ) -> dict[str, int]:
     summary = {"stage1_scored": 0, "stage2_scored": 0, "knocked_out": 0, "failed": 0, "skipped": 0}
     csv_index = _load_csv_index(layout)
 
+    def _load(row: CandidateRow) -> CandidateInput | None:
+        return _load_candidate_input(layout, row.candidate_id, csv_index.get(row.candidate_id, {}))
+
     if mode == "two-stage":
         ko_provider = knockout_provider or full_provider
-        for row in manifest.candidates_needing_stage1_score():
-            cand = _load_candidate_input(layout, row.candidate_id, csv_index.get(row.candidate_id, {}))
+
+        async def _knockout(row: CandidateRow) -> None:
+            cand = _load(row)
             if cand is None:
                 summary["skipped"] += 1
-                continue
+                return
             try:
                 ko = await _score_knockouts_only(ko_provider, rubric, jd_text, cand)
             except (ValidationError, RuntimeError) as e:
                 log.warning("Knockout pass failed for %s: %s", row.candidate_id, e)
                 manifest.mark_failed(row.candidate_id, status="failed_score", error=str(e))
                 summary["failed"] += 1
-                continue
-
+                return
             layout.score_json(row.candidate_id).write_text(
                 json.dumps(ko.model_dump(), indent=2), encoding="utf-8"
             )
@@ -156,39 +201,53 @@ async def run_scoring(
                 manifest.mark_stage1_scored(row.candidate_id, knocked_out=False)
                 summary["stage1_scored"] += 1
 
+        await _gather_bounded(
+            list(manifest.candidates_needing_stage1_score()),
+            _knockout,
+            concurrency=concurrency,
+            stage_label="Knockout stage",
+        )
+
         # Stage 2: full score on survivors.
-        for row in manifest.candidates_needing_stage2_score():
-            cand = _load_candidate_input(layout, row.candidate_id, csv_index.get(row.candidate_id, {}))
+        async def _full(row: CandidateRow) -> None:
+            cand = _load(row)
             if cand is None:
                 summary["skipped"] += 1
-                continue
+                return
             try:
                 full = await _score_single_pass(full_provider, rubric, jd_text, cand)
             except (ValidationError, RuntimeError) as e:
                 log.warning("Full scoring failed for %s: %s", row.candidate_id, e)
                 manifest.mark_failed(row.candidate_id, status="failed_score", error=str(e))
                 summary["failed"] += 1
-                continue
+                return
             layout.score_json(row.candidate_id).write_text(
                 json.dumps(full.model_dump(), indent=2), encoding="utf-8"
             )
             manifest.mark_stage2_scored(row.candidate_id)
             summary["stage2_scored"] += 1
 
+        await _gather_bounded(
+            list(manifest.candidates_needing_stage2_score()),
+            _full,
+            concurrency=concurrency,
+            stage_label="Full-scoring stage",
+        )
+
     else:  # single-pass
-        for row in manifest.candidates_needing_stage1_score():
-            cand = _load_candidate_input(layout, row.candidate_id, csv_index.get(row.candidate_id, {}))
+
+        async def _single(row: CandidateRow) -> None:
+            cand = _load(row)
             if cand is None:
                 summary["skipped"] += 1
-                continue
+                return
             try:
                 full = await _score_single_pass(full_provider, rubric, jd_text, cand)
             except (ValidationError, RuntimeError) as e:
                 log.warning("Scoring failed for %s: %s", row.candidate_id, e)
                 manifest.mark_failed(row.candidate_id, status="failed_score", error=str(e))
                 summary["failed"] += 1
-                continue
-
+                return
             layout.score_json(row.candidate_id).write_text(
                 json.dumps(full.model_dump(), indent=2), encoding="utf-8"
             )
@@ -201,6 +260,13 @@ async def run_scoring(
                 manifest.mark_stage2_scored(row.candidate_id)
                 summary["stage1_scored"] += 1
                 summary["stage2_scored"] += 1
+
+        await _gather_bounded(
+            list(manifest.candidates_needing_stage1_score()),
+            _single,
+            concurrency=concurrency,
+            stage_label="Scoring stage",
+        )
 
     return summary
 

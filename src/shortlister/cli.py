@@ -15,6 +15,7 @@ from .config import (
     DEFAULT_OPENAI_MODEL,
     DEFAULT_QWEN_KNOCKOUT_MODEL,
     DEFAULT_QWEN_MODEL,
+    DEFAULT_SCORE_CONCURRENCY,
     RuntimeConfig,
 )
 from .logging import get_logger, setup_logging
@@ -132,6 +133,13 @@ def score(
         "reasoning preamble that would corrupt JSON-mode output on thinking models like qwen3. "
         "Pass --qwen-thinking for non-thinking models (e.g. qwen2.5) that reject the field.",
     ),
+    concurrency: int = typer.Option(
+        DEFAULT_SCORE_CONCURRENCY,
+        "--concurrency",
+        min=1,
+        help="Number of candidates to score concurrently per stage. For local Ollama, "
+        "also set OLLAMA_NUM_PARALLEL to the same value so the server serves them in parallel.",
+    ),
     retry_failed: bool = typer.Option(False, "--retry-failed"),
 ) -> None:
     """Score parsed candidates against RUBRIC + JD using PROVIDER."""
@@ -168,6 +176,7 @@ def score(
                 mode=mode,  # type: ignore[arg-type]
                 full_provider=full_provider,
                 knockout_provider=ko_provider,
+                concurrency=concurrency,
             )
         )
     finally:
@@ -213,6 +222,13 @@ def run(
         help="For qwen only. Default (--no-qwen-thinking) sends think:false to suppress the "
         "reasoning preamble that would corrupt JSON-mode output on thinking models like qwen3. "
         "Pass --qwen-thinking for non-thinking models (e.g. qwen2.5) that reject the field.",
+    ),
+    concurrency: int = typer.Option(
+        DEFAULT_SCORE_CONCURRENCY,
+        "--concurrency",
+        min=1,
+        help="Number of candidates to score concurrently per stage. For local Ollama, "
+        "also set OLLAMA_NUM_PARALLEL to the same value so the server serves them in parallel.",
     ),
     top: int = typer.Option(50, "--top", min=1),
     resume: bool = typer.Option(True, "--resume/--new", help="Resume from manifest (default) or start fresh."),
@@ -287,6 +303,7 @@ def run(
                 mode=mode,  # type: ignore[arg-type]
                 full_provider=full_provider,
                 knockout_provider=ko_provider,
+                concurrency=concurrency,
             )
         )
         _print_summary("Score:", score_summary)

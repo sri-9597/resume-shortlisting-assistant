@@ -38,6 +38,17 @@ def _extract_with_pdfplumber(pdf_path: Path) -> str:
     return "\n".join(parts).strip()
 
 
+def _strip_unencodable(text: str) -> str:
+    """Drop characters that can't be encoded as UTF-8.
+
+    PDF extractors sometimes emit lone surrogates (e.g. the leading half of an
+    emoji, \\ud83d) that a Python str tolerates but `str.write_text(encoding="utf-8")`
+    rejects with a UnicodeEncodeError. Round-tripping through UTF-8 with
+    errors="ignore" drops exactly those code points and leaves valid text intact.
+    """
+    return text.encode("utf-8", "ignore").decode("utf-8")
+
+
 def extract_text(pdf_path: Path) -> tuple[str, str]:
     """Extract text from a PDF, falling back from pypdf to pdfplumber if needed.
 
@@ -49,7 +60,7 @@ def extract_text(pdf_path: Path) -> tuple[str, str]:
         log.info("pypdf yielded only %d chars for %s, falling back to pdfplumber.", len(text), pdf_path.name)
         text = _extract_with_pdfplumber(pdf_path)
         extractor = "pdfplumber"
-    return text, extractor
+    return _strip_unencodable(text), extractor
 
 
 def run_parse(layout: RoleLayout, manifest: Manifest) -> dict[str, int]:

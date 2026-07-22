@@ -49,19 +49,22 @@ class QwenProvider(LLMProvider):
         tool_name: str,
         tool_description: str,
     ) -> dict:
-        # Qwen via Ollama doesn't support tool-use; we ask for JSON-mode and validate post-hoc.
-        # The schema is embedded in the prompt so the model knows the shape to produce.
+        # Qwen via Ollama doesn't support tool-use. Instead of asking for free-form
+        # JSON and pasting the schema into the prompt (which tempts the model to echo
+        # the schema back verbatim), we hand the schema to Ollama's `format` field.
+        # That switches on structured outputs: decoding is grammar-constrained to a
+        # single instance conforming to the schema. We still validate post-hoc.
         user_msg = (
             f"{cacheable_prefix}\n\n"
             f"--- CANDIDATE ---\n{candidate_block}\n\n"
-            f"--- OUTPUT (return ONLY a single JSON object conforming to this schema; "
-            f"do not include backticks, comments, or any prose) ---\n"
-            f"{json.dumps(output_schema)}"
+            f"--- TASK ---\n"
+            f"Assess this candidate and return the result as a single JSON object. "
+            f"Populate every field with your assessment; do not restate the schema."
         )
         payload = {
             "model": self.model,
             "stream": False,
-            "format": "json",
+            "format": output_schema,
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_msg},

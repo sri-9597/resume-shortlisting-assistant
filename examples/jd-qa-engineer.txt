@@ -1,31 +1,38 @@
-QA Engineer — Sample Job Description
+QA Engineer — Job Description
 =====================================
+About the Role:
+-------------------
 
-We're hiring a QA engineer who will own automated testing across our product.
-This is an automation-first role: if you prefer to test only manually, this
-isn't the right fit.
+We're looking for a QA Engineer who takes quality personally. You'll work closely with our engineering team to ensure our products are reliable, well-tested, and release-ready. This is a hands-on role that spans both automation and manual testing, and you'll have real ownership over quality processes, not just be a gatekeeper at the end of a pipeline.
 
-What you'll do
---------------
-- Design and grow our automation suites: API tests, end-to-end browser tests,
-  contract tests where appropriate.
-- Decide what to automate vs. what to leave manual — your judgement matters more
-  than your line count.
-- Integrate tests into CI/CD; own flaky-test mitigation, parallelization,
-  and test infrastructure.
-- Partner with engineers on bug triage, root-cause analysis, and writing
-  high-signal bug reports.
-- Champion testability concerns during feature design.
+What You'll Do
+-------------------
 
-What we're looking for
-----------------------
-- 3+ years of professional QA experience.
-- Hands-on experience writing automated tests in at least one framework
-  (Playwright, Cypress, Selenium, Pytest, RestAssured, etc.).
-- Programming skill — your automation code should be reviewable, not just runnable.
-- Strong written communication: your bug reports save engineers time.
-- Bonus: experience with performance testing, accessibility testing, or
-  test-data-management strategies.
+• Design, build, and maintain automated testing frameworks from the ground up and iterate on them as the product evolves
+• Write, review, and improve automated test suites covering unit, integration, and end-to-end testing
+• Manually test new features thoroughly before releases, including exploratory testing and edge case coverage
+• Own the release sign-off process — be the last line of defense before something ships
+• Integrate automated tests into CI/CD pipelines and ensure test runs are fast, reliable, and actionable
+• Identify flaky tests, debug failures, and keep the test suite healthy over time
+• Work with engineers to reproduce bugs, define acceptance criteria, and validate fixes
+• Maintain clear, up-to-date documentation — test plans, test cases, release checklists, and bug reports
+• Contribute to improving QA processes and standards across the team
+
+What We're Looking For
+-------------------
+
+• 2 to 4 years of experience in a QA or SDET role with a mix of automation and manual testing
+• Hands-on experience building or significantly contributing to automated testing frameworks (Playwright, Cypress, Jest, or similar)
+• Solid understanding of CI/CD pipelines and experience integrating tests into them (GitHub Actions or similar)
+• Experience testing modern web applications, including REST APIs and frontend interfaces
+• Strong debugging skills and the ability to triage failures independently
+• Comfort with JavaScript or TypeScript — our stack is primarily TypeScript/Node.js
+• A methodical, documentation-first mindset
+• Good communication skills — you'll be coordinating sign-offs and surfacing quality issues clearly Nice to Have
+• Experience testing Next.js applications or SSR/SSG-based frontends
+• Familiarity with cloud environments (AWS) and database-level testing (MongoDB)
+• Exposure to performance or accessibility testing
+• Experience working on multi-tenant or data-heavy application
 
 Working arrangement
 -------------------

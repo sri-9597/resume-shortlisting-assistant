@@ -38,19 +38,21 @@ async def test_qwen_provider_posts_to_ollama_and_parses_json(monkeypatch) -> Non
 
     monkeypatch.setattr(httpx, "AsyncClient", _MockClient)
 
+    schema = {"type": "object", "properties": {"hello": {"type": "string"}}}
     provider = QwenProvider(base_url="http://localhost:11434", model="qwen2.5:14b-instruct")
     result = await provider.score(
         system="sys",
         cacheable_prefix="prefix",
         candidate_block="cand",
-        output_schema={"type": "object"},
+        output_schema=schema,
         tool_name="record",
         tool_description="d",
     )
     assert result == {"hello": "world"}
     assert captured["url"] == "http://localhost:11434/api/chat"
     assert captured["payload"]["model"] == "qwen2.5:14b-instruct"
-    assert captured["payload"]["format"] == "json"
+    # Structured outputs: the schema itself is sent as `format`, not the string "json".
+    assert captured["payload"]["format"] == schema
     # Ensure cacheable_prefix and candidate_block both reached the user message.
     msgs = captured["payload"]["messages"]
     user = next(m for m in msgs if m["role"] == "user")

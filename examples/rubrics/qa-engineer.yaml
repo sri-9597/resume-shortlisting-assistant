@@ -1,11 +1,11 @@
-role: "QA Engineer (sample)"
+role: "QA Engineer"
 version: 1
 
 knockouts:
   - id: qa_experience
-    description: "Candidate has at least 3 years of professional QA or test engineering experience."
+    description: "Candidate has at least 2 years of professional QA or test engineering experience."
   - id: automation_experience
-    description: "Resume shows hands-on experience writing automated tests (any framework: Playwright, Cypress, Selenium, Pytest, RestAssured, etc.). Pure manual-QA backgrounds are knocked out."
+    description: "Resume shows hands-on experience writing automated tests (any framework: Playwright, Cypress, Selenium, Pytest, RestAssured, etc.). Resumes with only manual-QA backgrounds are knocked out."
 
 criteria:
   - id: automation_depth

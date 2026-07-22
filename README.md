@@ -108,7 +108,8 @@ resume-shortlist score  --role <name> --rubric <path> --jd <path>
                         [--mode single|two-stage]
                         [--provider claude|claude-code|openai|qwen] [--model <id>]
                         [--knockout-provider ...] [--knockout-model ...]
-                        [--retry-failed]
+                        [--qwen-thinking / --no-qwen-thinking]
+                        [--concurrency N] [--retry-failed]
 resume-shortlist rank   --role <name> [--top 50]
 resume-shortlist run    --role <name> --csv <path> --resumes-dir <path>
                         --rubric <path> --jd <path>
@@ -118,6 +119,10 @@ resume-shortlist run    --role <name> --csv <path> --resumes-dir <path>
 - `--resume` (default) picks up where the last run stopped; `--new` wipes the
   role directory and starts fresh (`--yes` skips the confirmation).
 - `--retry-failed` re-queues candidates in terminal failure states.
+- `--concurrency N` (default 4) scores up to N candidates at once per stage —
+  see [Concurrency](#concurrency).
+- `--qwen-thinking` / `--no-qwen-thinking` toggles the `think: false` flag sent
+  to Ollama — see the [`qwen` provider notes](#providers).
 
 ## Providers
 
@@ -126,7 +131,16 @@ resume-shortlist run    --role <name> --csv <path> --resumes-dir <path>
 | `claude` | API per token | `ANTHROPIC_API_KEY` env | Streaming + tool-use. Prompt caching on the rubric/JD prefix — best per-candidate cost at scale. Default model: `claude-sonnet-4-6`. |
 | `claude-code` | Included in Claude Code subscription | Local `claude` CLI installed | Shells out to `claude -p --bare --json-schema ...`. No API key needed. No cross-candidate prompt caching; ~1-2s subprocess overhead. Fine for hundreds, slower than `claude` for thousands. |
 | `openai` | API per token | `OPENAI_API_KEY` env | Structured Outputs (`json_schema`, strict mode). Auto-cached on stable prefixes. Default model: `gpt-4o`. |
-| `qwen` | Free (local) | Ollama running on `localhost:11434` (override with `OLLAMA_HOST`) | Local Qwen 2.5 via Ollama, JSON-mode output. Quality below Sonnet/GPT-4o; great for knockout passes. |
+| `qwen` | Free (local) | Ollama running on `localhost:11434` (override with `OLLAMA_HOST`) | Local Qwen via Ollama, structured-outputs (schema passed as `format`). Default model `qwen3:30b`. Quality below Sonnet/GPT-4o; great for knockout passes. |
+
+**Thinking vs. non-thinking models.** The default (`--no-qwen-thinking`) sends
+`think: false` to Ollama to suppress the reasoning preamble that thinking models
+(e.g. `qwen3`) emit and that would corrupt structured-outputs parsing. For
+non-thinking models such as `qwen2.5:*` that reject the field, pass
+`--qwen-thinking`. Note that `qwen3:30b` is a Mixture-of-Experts model
+(`qwen3:30b-a3b`, ~3B active params/token), so despite the "30b" label it
+decodes faster than a dense `qwen2.5:14b` — often the better speed *and* quality
+choice for knockouts if you have the memory for it.
 
 Adding a new provider is a single subclass — see [`CONTRIBUTING.md`](CONTRIBUTING.md#how-to-add-a-new-llm-provider).
 
@@ -140,9 +154,41 @@ resume-shortlist run --role senior-backend \
     --csv candidates.csv --resumes-dir resumes/ \
     --rubric rubrics/senior-backend.yaml --jd jd.txt \
     --mode two-stage \
-    --knockout-provider qwen --knockout-model qwen2.5:7b-instruct \
+    --knockout-provider qwen --knockout-model qwen2.5:7b-instruct --qwen-thinking \
     --provider claude --model claude-sonnet-4-6
 ```
+
+## Concurrency
+
+Candidates are scored independently, so each stage can process several at once.
+`--concurrency N` (default 4) caps how many are in flight per stage. Scoring is
+I/O-bound on the provider call, so overlapping those waits is usually a large
+wall-clock win on big batches.
+
+```bash
+resume-shortlist run --role senior-backend ... --concurrency 4
+```
+
+**Local Ollama (`qwen`) needs a matching server-side setting.** Client-side
+concurrency alone does nothing if Ollama serves requests one at a time — it just
+queues them. Tell the Ollama *server* how many parallel requests to handle:
+
+```bash
+# If you run `ollama serve` yourself:
+OLLAMA_NUM_PARALLEL=4 ollama serve
+
+# If you run the Ollama macOS app:
+launchctl setenv OLLAMA_NUM_PARALLEL 4   # then quit and reopen Ollama.app
+```
+
+Set `OLLAMA_NUM_PARALLEL` to at least your `--concurrency`. Each parallel
+request needs its own KV-cache context, so memory grows with concurrency — if
+memory pressure spikes, lower both values together (e.g. `--concurrency 2` +
+`OLLAMA_NUM_PARALLEL=2`).
+
+For API providers (`claude`, `openai`) no server setting is needed, but keep
+`--concurrency` modest to stay within your account's rate limits. For
+`claude-code`, each concurrent candidate spawns its own `claude -p` subprocess.
 
 ## Rubrics
 

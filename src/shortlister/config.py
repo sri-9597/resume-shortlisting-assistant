@@ -16,6 +16,11 @@ DEFAULT_QWEN_MODEL = "qwen3:30b"
 DEFAULT_QWEN_KNOCKOUT_MODEL = "qwen3:30b"
 DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
 
+# How many candidates to score concurrently within a stage. Candidates are
+# independent, so scoring is I/O-bound on the provider call; running a few in
+# flight overlaps those waits. For local Ollama, pair this with OLLAMA_NUM_PARALLEL.
+DEFAULT_SCORE_CONCURRENCY = 4
+
 
 @dataclass(frozen=True)
 class ProviderConfig:
