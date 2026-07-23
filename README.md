@@ -67,6 +67,7 @@ backend-may2026/
   scores/<id>.json         # per-criterion scores + reasoning
   ranked.csv               # top N
   ranked_full.csv          # everyone who scored, in order
+  ranked_resumes/<rank>_<id>.pdf   # top-N resumes, copied in ranking order
 ```
 
 ## Ingestion contract

@@ -201,6 +201,7 @@ def rank(
         manifest.close()
     _print_summary("Rank:", summary)
     typer.echo(f"Wrote {layout.ranked_csv} and {layout.ranked_full_csv}")
+    typer.echo(f"Copied {summary['resumes_copied']} resume(s) into {layout.ranked_resumes_dir}")
 
 
 # ----------------------- run -----------------------
@@ -312,6 +313,7 @@ def run(
         rank_summary = run_rank(layout, manifest, top_n=top)
         _print_summary("Rank:", rank_summary)
         typer.echo(f"Wrote {layout.ranked_csv} and {layout.ranked_full_csv}")
+        typer.echo(f"Copied {rank_summary['resumes_copied']} resume(s) into {layout.ranked_resumes_dir}")
     finally:
         manifest.close()
     _print_status(layout)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -90,9 +91,40 @@ def rank(layout: RoleLayout, manifest: Manifest, *, top_n: int = 50) -> dict[str
             )
         )
 
+    top = full[:top_n]
     _write_csv(layout.ranked_full_csv, full)
-    _write_csv(layout.ranked_csv, full[:top_n])
-    return {"ranked": len(full), "top_n_written": min(top_n, len(full))}
+    _write_csv(layout.ranked_csv, top)
+    copied = _copy_ranked_resumes(layout, top)
+    return {
+        "ranked": len(full),
+        "top_n_written": len(top),
+        "resumes_copied": copied,
+    }
+
+
+def _copy_ranked_resumes(layout: RoleLayout, rows: list[RankedRow]) -> int:
+    """Copy the shortlisted candidates' resume PDFs into `ranked_resumes/`.
+
+    Files are prefixed with their zero-padded rank (e.g. `001_<candidate_id>.pdf`)
+    so a reviewer sees them in ranking order in any file browser. The directory is
+    rebuilt from scratch on every run so a re-rank never leaves stale entries.
+    """
+    dest_dir = layout.ranked_resumes_dir
+    if dest_dir.exists():
+        shutil.rmtree(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    width = max(len(str(len(rows))), 3)
+    copied = 0
+    for r in rows:
+        src = layout.resume_pdf(r.candidate_id)
+        if not src.exists():
+            log.warning("No resume PDF to copy for ranked candidate %s (%s)", r.candidate_id, src)
+            continue
+        dest = dest_dir / f"{r.rank:0{width}d}_{r.candidate_id}.pdf"
+        shutil.copy2(src, dest)
+        copied += 1
+    return copied
 
 
 def _write_csv(path: Path, rows: list[RankedRow]) -> None:

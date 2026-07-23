@@ -33,6 +33,10 @@ class RoleLayout:
     def ranked_full_csv(self) -> Path:
         return self.root / "ranked_full.csv"
 
+    @property
+    def ranked_resumes_dir(self) -> Path:
+        return self.root / "ranked_resumes"
+
     def resume_pdf(self, candidate_id: str) -> Path:
         return self.resumes_dir / f"{candidate_id}.pdf"
 
