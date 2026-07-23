@@ -56,10 +56,10 @@ resume-shortlist run \
     --provider claude --top 50
 ```
 
-Output lands in `./backend-may2026/`:
+Output lands in `./results/<role>/` (the whole `results/` tree is git-ignored):
 
 ```
-backend-may2026/
+results/backend-may2026/
   manifest.sqlite          # per-candidate state (resumable)
   candidates.csv           # copy of your input
   resumes/<id>.pdf         # input PDFs

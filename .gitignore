@@ -6,16 +6,17 @@ venv/
 build/
 dist/
 
-# Output dirs created by the tool (role slugs)
-# Common role names — extend as needed
-/senior-sde/
-/qa/
-/test-role/
+# All per-role run output (manifest, resumes, scores, ranked CSVs,
+# ranked_resumes/) lives under results/ — see storage/layout.py.
+/results/
 
-# But always ignore the artifacts pattern
+# Safety net: never commit run artifacts or candidate PII, wherever they land.
+# (The examples/ fixtures use distinct names — sample-candidates.csv,
+# sample-resumes/ — so they stay tracked.)
 **/manifest.sqlite
 **/resumes/
 **/scores/
+**/ranked_resumes/
 ranked.csv
 ranked_full.csv
 candidates.csv

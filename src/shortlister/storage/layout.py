@@ -52,6 +52,11 @@ class RoleLayout:
         self.scores_dir.mkdir(parents=True, exist_ok=True)
 
 
+# All per-role run output lives under this directory so it's trivially
+# git-ignorable and never intermingles with source. See .gitignore.
+RESULTS_DIR = "results"
+
+
 def layout_for(role: str, cwd: Path | None = None) -> RoleLayout:
     base = cwd or Path.cwd()
-    return RoleLayout(role=role, root=base / role)
+    return RoleLayout(role=role, root=base / RESULTS_DIR / role)
