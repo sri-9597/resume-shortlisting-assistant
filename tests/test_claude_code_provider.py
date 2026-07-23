@@ -64,7 +64,9 @@ async def test_claude_code_provider_invokes_cli_with_expected_flags(monkeypatch)
     assert result == payload
     assert "claude" in captured_args[0]
     assert "-p" in captured_args
-    assert "--bare" in captured_args
+    # `--bare` forces API-key-only auth and never reads the OAuth/keychain login
+    # the Claude Code subscription uses, so it must NOT be passed here.
+    assert "--bare" not in captured_args
     assert "--no-session-persistence" in captured_args
     assert "--output-format" in captured_args
     fmt_idx = captured_args.index("--output-format")
@@ -99,6 +101,43 @@ async def test_claude_code_provider_retries_then_raises(monkeypatch) -> None:
             tool_name="record",
             tool_description="d",
         )
+
+
+@pytest.mark.asyncio
+async def test_claude_code_provider_surfaces_stdout_error_on_nonzero_exit(monkeypatch) -> None:
+    # The CLI reports auth failures ("Not logged in") in stdout's JSON envelope
+    # with an EMPTY stderr and exit 1. The old handler only read stderr, so the
+    # error message was blank. Verify the stdout reason is now surfaced.
+    monkeypatch.setattr(cc_module, "LLM_RETRY_DELAYS_SECONDS", (0.0,))
+    envelope = {
+        "type": "result",
+        "subtype": "success",
+        "is_error": True,
+        "result": "Not logged in · Please run /login",
+    }
+
+    async def fake_exec(*args, **kwargs):
+        return _FakeProcess(json.dumps(envelope).encode("utf-8"), returncode=1, stderr=b"")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+
+    provider = ClaudeCodeProvider(model="sonnet", binary="claude")
+    with pytest.raises(RuntimeError, match="Not logged in"):
+        await provider.score(
+            system="s",
+            cacheable_prefix="p",
+            candidate_block="c",
+            output_schema={"type": "object"},
+            tool_name="record",
+            tool_description="d",
+        )
+
+
+def test_extract_json_payload_raises_on_is_error_even_when_subtype_success() -> None:
+    # A zero-exit envelope can still carry is_error=True with subtype "success".
+    env = {"type": "result", "subtype": "success", "is_error": True, "result": "Not logged in"}
+    with pytest.raises(RuntimeError, match="Not logged in"):
+        _extract_json_payload(json.dumps(env))
 
 
 def test_extract_json_payload_handles_string_result() -> None:

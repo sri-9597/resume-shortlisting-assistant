@@ -4,6 +4,7 @@ import asyncio
 import json
 import re
 import shutil
+import tempfile
 from typing import Any
 
 from ...config import LLM_RETRY_DELAYS_SECONDS
@@ -52,6 +53,12 @@ class ClaudeCodeProvider(LLMProvider):
         self.model = model
         self.binary = binary
         self.timeout = timeout
+        # Run the CLI from a neutral empty directory so it doesn't auto-discover a
+        # project CLAUDE.md and inject unrelated instructions into the scoring
+        # context. (`--bare` used to suppress that discovery, but it also disabled
+        # OAuth/keychain auth, breaking subscription use — so we drop it and
+        # isolate the cwd instead.)
+        self._cwd = tempfile.mkdtemp(prefix="shortlister-cc-")
         if shutil.which(self.binary) is None:
             log.warning(
                 "ClaudeCodeProvider initialized but `%s` is not on PATH. Calls will fail at runtime.",
@@ -78,10 +85,14 @@ class ClaudeCodeProvider(LLMProvider):
             "Do not include any prose, markdown, or commentary outside the JSON object."
         )
 
+        # NOTE: no `--bare`. That flag forces API-key-only auth and never reads the
+        # OAuth/keychain login the Claude Code *subscription* uses, so under `--bare`
+        # a subscription-only user gets "Not logged in" (exit 1). Isolation that
+        # `--bare` provided (no CLAUDE.md discovery) is handled by running in
+        # `self._cwd`; see __init__.
         args = [
             self.binary,
             "-p",
-            "--bare",
             "--no-session-persistence",
             "--disable-slash-commands",
             "--tools", "",
@@ -110,6 +121,7 @@ class ClaudeCodeProvider(LLMProvider):
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            cwd=self._cwd,
         )
         try:
             stdout_b, stderr_b = await asyncio.wait_for(
@@ -121,12 +133,39 @@ class ClaudeCodeProvider(LLMProvider):
             await proc.wait()
             raise RuntimeError(f"claude-code call timed out after {self.timeout}s") from e
 
-        if proc.returncode != 0:
-            tail = (stderr_b or b"").decode("utf-8", errors="replace")[-1000:]
-            raise RuntimeError(f"claude returned exit {proc.returncode}: {tail}")
-
         stdout = stdout_b.decode("utf-8", errors="replace").strip()
+        stderr = (stderr_b or b"").decode("utf-8", errors="replace").strip()
+
+        if proc.returncode != 0:
+            # The CLI reports some failures (e.g. auth: "Not logged in") in stdout's
+            # JSON envelope with an EMPTY stderr, so consult both.
+            raise RuntimeError(
+                f"claude returned exit {proc.returncode}: {_cli_error_message(stdout, stderr)}"
+            )
+
         return _extract_json_payload(stdout)
+
+
+def _cli_error_message(stdout: str, stderr: str) -> str:
+    """Best-effort human-readable reason for a failed `claude -p` invocation.
+
+    Prefers stderr, then stdout. When the text is a JSON result envelope (the
+    common case — the CLI puts auth and API errors in `result` with an empty
+    stderr), pull the `result`/`error` message out of it.
+    """
+    for chunk in (stderr, stdout):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        try:
+            env = json.loads(chunk)
+        except json.JSONDecodeError:
+            return chunk[-1000:]
+        if isinstance(env, dict):
+            msg = env.get("result") or env.get("error")
+            return str(msg) if msg else json.dumps(env)[-1000:]
+        return chunk[-1000:]
+    return "(no output on stdout or stderr)"
 
 
 def _extract_json_payload(stdout: str) -> dict:
@@ -149,6 +188,12 @@ def _extract_json_payload(stdout: str) -> dict:
         if not match:
             raise RuntimeError(f"Could not parse claude envelope: {stdout[-500:]!r}") from e
         envelope = json.loads(match.group(0))
+
+    # `is_error` can be True even when `subtype == "success"` (e.g. an auth failure
+    # returned on a zero exit), so check it independently of subtype.
+    if isinstance(envelope, dict) and envelope.get("is_error"):
+        reason = envelope.get("result") or envelope.get("error") or envelope
+        raise RuntimeError(f"claude reported an error: {reason}")
 
     if isinstance(envelope, dict) and envelope.get("type") == "result" and envelope.get("subtype") != "success":
         raise RuntimeError(f"claude returned non-success result: {envelope!r}")
